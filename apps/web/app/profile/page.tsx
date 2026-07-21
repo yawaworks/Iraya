@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { supabase, getCurrentUser } from "@iraya/supabase-client"
 import { useRouter } from "next/navigation"
 
@@ -8,19 +8,20 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
+  // Guards against onAuthStateChange firing (possibly with a stale/null
+  // session) before the initial getCurrentUser() check has resolved.
+  const initialCheckDone = useRef(false)
 
   useEffect(() => {
     let mounted = true
-    const { subscription } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session?.user && mounted) {
-        router.push("/login")
-      }
-    })
 
     async function loadProfile() {
       const user = await getCurrentUser()
 
+      if (!mounted) return
+
       if (!user) {
+        initialCheckDone.current = true
         router.push("/login")
         return
       }
@@ -35,13 +36,27 @@ export default function ProfilePage() {
 
       setProfile(data)
       setLoading(false)
+      initialCheckDone.current = true
     }
 
     loadProfile()
 
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      // Ignore events until the initial check above has finished — otherwise
+      // a stale/null session emitted during client restore can bounce us
+      // straight back to /login right after a successful sign-in.
+      if (!initialCheckDone.current) return
+
+      if (!session?.user && mounted) {
+        router.push("/login")
+      }
+    })
+
     return () => {
       mounted = false
-      subscription?.unsubscribe?.()
+      subscription.unsubscribe()
     }
   }, [router])
 
