@@ -18,18 +18,31 @@ export default function LoginPage() {
     setError(null)
     setLoading(true)
 
-    const result = isSignUp
-      ? await signUp(email, password, username)
-      : await signIn(email, password)
+    try {
+      const result = isSignUp
+        ? await signUp(email, password, username)
+        : await signIn(email, password)
 
-    setLoading(false)
+      if (result.error || !result.data?.session?.user) {
+        setError(result.error?.message ?? "Unable to sign in. Please check your credentials.")
+        return
+      }
 
-    if (result.error || !result.data?.session?.user) {
-      setError(result.error?.message ?? "Unable to sign in. Please check your credentials.")
-      return
+      router.push("/profile")
+    } catch (err) {
+      // Catches anything that isn't a normal Supabase { error } response —
+      // network failures, CORS issues, a misconfigured Supabase URL, etc.
+      // Without this, an exception here leaves the button stuck on
+      // "Loading..." forever with no visible feedback.
+      console.error("Auth request failed:", err)
+      setError(
+        err instanceof Error
+          ? `Request failed: ${err.message}`
+          : "Something went wrong. Check your connection and try again."
+      )
+    } finally {
+      setLoading(false)
     }
-
-    router.push("/profile")
   }
 
   return (
