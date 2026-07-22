@@ -74,6 +74,9 @@ export default function ProfilePage() {
       <h1>Profile</h1>
       <p>Username: {profile?.username ?? "Not set"}</p>
       <p>Aesthetic preferences: {profile?.aesthetic_preferences?.join(", ") || "None yet"}</p>
+      <p>
+        <a href="/onboarding">Edit your vibes</a>
+      </p>
       <button onClick={handleLogout}>Log Out</button>
     </div>
   )

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { signIn, signUp } from "@iraya/supabase-client"
+import { signIn, signUp, getProfile } from "@iraya/supabase-client"
 import { useRouter } from "next/navigation"
 
 export default function LoginPage() {
@@ -28,7 +28,13 @@ export default function LoginPage() {
         return
       }
 
-      router.push("/profile")
+      const { data: profile } = await getProfile(result.data.session.user.id)
+
+      if (!profile?.aesthetic_preferences?.length) {
+        router.push("/onboarding")
+      } else {
+        router.push("/discover")
+      }
     } catch (err) {
       // Catches anything that isn't a normal Supabase { error } response —
       // network failures, CORS issues, a misconfigured Supabase URL, etc.
