@@ -1,9 +1,9 @@
-import 'react-native-url-polyfill/auto';
 import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet } from 'react-native';
 import {
   getCurrentUser,
   getDiscoveryFeed,
+  getProfile,
   recordSwipe,
   type Product,
 } from '@iraya/supabase-client';
@@ -11,10 +11,6 @@ import {
 import { SwipeDeck } from '@/components/swipe-deck';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-
-// TODO: replace with the user's selected aesthetic tags from onboarding/profile
-// once that flow exists — see profiles.aesthetic_preferences.
-const DEFAULT_AESTHETIC_TAGS = ['old money', 'coquette'];
 
 export default function DiscoverScreen() {
   const [products, setProducts] = useState<Product[] | null>(null);
@@ -26,13 +22,15 @@ export default function DiscoverScreen() {
 
     async function load() {
       const user = await getCurrentUser();
-      if (!user) {
-        if (mounted) setError('Log in to see your personalized feed.');
-        return;
-      }
+      if (!user) return; // root layout handles redirecting to /login
+
       if (mounted) setUserId(user.id);
 
-      const { data, error: feedError } = await getDiscoveryFeed(user.id, DEFAULT_AESTHETIC_TAGS);
+      const { data: profile } = await getProfile(user.id);
+      const { data, error: feedError } = await getDiscoveryFeed(
+        user.id,
+        profile?.aesthetic_preferences ?? []
+      );
 
       if (!mounted) return;
       if (feedError) {
@@ -43,7 +41,6 @@ export default function DiscoverScreen() {
     }
 
     load();
-
     return () => {
       mounted = false;
     };
