@@ -128,6 +128,22 @@ export default function DiscoverPage() {
                     {product.aesthetic_tags.join(" · ")}
                   </p>
                 )}
+                {product.affiliate_link && (
+                  <a
+                    href={product.affiliate_link}
+                    target="_blank"
+                    rel="noopener noreferrer sponsored"
+                    onPointerDown={(e) => e.stopPropagation()}
+                    style={{
+                      display: "inline-block",
+                      marginTop: "0.5rem",
+                      fontSize: "0.85rem",
+                      color: "#0066cc",
+                    }}
+                  >
+                    Shop this →
+                  </a>
+                )}
               </div>
             </div>
           </SwipeCard>

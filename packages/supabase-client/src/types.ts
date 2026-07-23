@@ -17,6 +17,7 @@ export type Product = {
   images: string[]
   source_platform: string
   affiliate_link: string | null
+  external_id: string | null
   aesthetic_tags: string[]
   category: string | null
   created_at: string
